@@ -204,7 +204,7 @@ class TagLinkSettingTab extends PluginSettingTab {
                 .setIcon('plus')
                 .setTooltip('Add')
                 .onClick(async () => {
-                    this.plugin.settings.tagLinkSubstitutions.push({ ...DEFAULT_SUBSTITUTION });
+                    this.plugin.settings.tagLinkSubstitutions.push(structuredClone(DEFAULT_SUBSTITUTION));
 
                     await this.plugin.saveSettings();
                     this.display();
