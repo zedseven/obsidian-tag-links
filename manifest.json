@@ -1,11 +1,10 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
-	"version": "1.0.0",
+	"id": "tag-links",
+	"name": "Tag Links",
+	"version": "0.1.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "Allows tags to be used as links.",
+	"author": "Zacchary Dempsey-Plante",
+	"authorUrl": "https://github.com/zedseven/obsidian-tag-links",
 	"isDesktopOnly": false
 }
