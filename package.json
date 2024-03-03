@@ -1,6 +1,6 @@
 {
 	"name": "tag-links",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Allows tags to be used as links.",
 	"main": "main.js",
 	"scripts": {
