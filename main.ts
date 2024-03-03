@@ -197,9 +197,6 @@ class TagLinkSettingTab extends PluginSettingTab {
         // Clear the display
 		containerEl.empty();
 
-        // Header
-        containerEl.createEl('h2', { text: 'Tag link substitutions' });
-
         // Row Add Button
         new Setting(containerEl)
             .setName('Add new')
