@@ -14,6 +14,11 @@ interface TagLinkSettings {
 interface TagLinkSubstitution {
     tagRegex: string;
     linkSubstitution: string;
+    metadata: {
+        regexProblem: string | null;
+        substitutionProblem: string | null;
+        captureGroupCount: number;
+    };
 }
 
 const DEFAULT_SETTINGS: TagLinkSettings = {
@@ -23,6 +28,11 @@ const DEFAULT_SETTINGS: TagLinkSettings = {
 const DEFAULT_SUBSTITUTION: TagLinkSubstitution = {
     tagRegex: '',
     linkSubstitution: '',
+    metadata: {
+        regexProblem: 'The value is empty!',
+        substitutionProblem: 'The value is empty!',
+        captureGroupCount: 0
+    }
 }
 
 export default class TagLink extends Plugin {
@@ -54,14 +64,14 @@ export default class TagLink extends Plugin {
 
     async openTagAsLinkAtCursor(plugin: TagLink, editor: Editor) {
         // https://help.obsidian.md/Editing+and+formatting/Tags#Tag+format
-        const findTagRegex = /#([\w\/\-_]+)/g;
+        const FIND_TAG_REGEX = /#([\w\/\-_]+)/g;
 
         const cursorPosition = editor.getCursor();
         const currentLine = editor.getLine(cursorPosition.line);
 
         let searchResult;
-        while ((searchResult = findTagRegex.exec(currentLine)) !== null) {
-            if (findTagRegex.lastIndex < cursorPosition.ch) {
+        while ((searchResult = FIND_TAG_REGEX.exec(currentLine)) !== null) {
+            if (FIND_TAG_REGEX.lastIndex < cursorPosition.ch) {
                 continue;
             }
             if (searchResult.index > cursorPosition.ch) {
@@ -77,8 +87,12 @@ export default class TagLink extends Plugin {
 
     async openTagAsLink(tag: string) {
         for (const tagLinkSubstitution of this.settings.tagLinkSubstitutions) {
-            const MINIMUM_GROUP_LENGTH = 2;
+            // Skip entries that are known to be invalid
+            if (tagLinkSubstitution.metadata.regexProblem !== null || tagLinkSubstitution.metadata.substitutionProblem !== null) {
+                continue;
+            }
 
+            // Compile the regular expression
             let tagRegex;
             try {
                 tagRegex = new RegExp(tagLinkSubstitution.tagRegex);
@@ -86,26 +100,81 @@ export default class TagLink extends Plugin {
                 continue;
             }
 
+            // Check if there's a match
             let matchResult = tag.match(tagRegex);
             if (matchResult === null) {
                 continue;
             }
 
-            if (matchResult.length < MINIMUM_GROUP_LENGTH) {
+            // Ensure there's at least one capture group
+            if (matchResult.length - 1 == 0) {
                 continue;
             }
 
+            // Step through the capture groups, using the capture groups' indices as the substitution targets
             let finalLink = tagLinkSubstitution.linkSubstitution;
             for (let index = 1; index < matchResult.length; index++) {
                 finalLink = finalLink.replace('$' + index, matchResult[index]);
             }
 
+            // Open the substituted link in the browser
+            new Notice('Opening the following link in the browser: ' + finalLink)
             window.open(finalLink);
 
             return;
         }
 
         new Notice('The selected tag doesn\'t match any configured tag link substitutions!');
+    }
+
+    async validateTagRegex(tagLinkSubstitution: TagLinkSubstitution) {
+        if (tagLinkSubstitution.tagRegex.length == 0) {
+            tagLinkSubstitution.metadata.regexProblem = 'The value is empty!';
+            return;
+        }
+
+        try {
+            // https://stackoverflow.com/a/16046903
+            const captureGroupCount = (new RegExp(tagLinkSubstitution.tagRegex + '|'))
+                .exec('')
+                .length - 1;
+
+            tagLinkSubstitution.metadata.captureGroupCount = captureGroupCount;
+
+            if (captureGroupCount == 0) {
+                tagLinkSubstitution.metadata.regexProblem = 'You need at least one capture group! Surround the important part of the tag with (brackets).';
+                return;
+            }
+        } catch (_) {
+            tagLinkSubstitution.metadata.regexProblem = 'The regular expression is invalid!';
+            return;
+        }
+
+        tagLinkSubstitution.metadata.regexProblem = null; // No problem
+    }
+
+    async validateLinkSubstitution(tagLinkSubstitution: TagLinkSubstitution) {
+        const FIND_SUBSTITUTION_REGEX = /\$(\d+)/g;
+
+        let maximumSubstitutionValue = null;
+        for (const substitutionMatch of tagLinkSubstitution.linkSubstitution.matchAll(FIND_SUBSTITUTION_REGEX)) {
+            let substitutionValue = parseInt(substitutionMatch[1], 10);
+            if (isNaN(substitutionValue)) {
+                tagLinkSubstitution.metadata.substitutionProblem = 'One of the substitution values is not a valid number!';
+                return;
+            }
+
+            if (maximumSubstitutionValue === null || maximumSubstitutionValue < substitutionValue) {
+                maximumSubstitutionValue = substitutionValue;
+            }
+        }
+
+        if (maximumSubstitutionValue > tagLinkSubstitution.metadata.captureGroupCount) {
+            tagLinkSubstitution.metadata.substitutionProblem = 'One of the substitution values is greater than the number of capture groups!';
+            return;
+        }
+
+        tagLinkSubstitution.metadata.substitutionProblem = null; // No problem
     }
 }
 
@@ -120,10 +189,13 @@ class TagLinkSettingTab extends PluginSettingTab {
 	display(): void {
 		const {containerEl} = this;
 
+        // Clear the display
 		containerEl.empty();
 
+        // Header
         containerEl.createEl('h2', { text: 'Tag Link Substitutions' });
 
+        // Row Add Button
         new Setting(containerEl)
             .setName('Add New')
             .addButton(button => button
@@ -139,25 +211,79 @@ class TagLinkSettingTab extends PluginSettingTab {
         for (let index = 0; index < this.plugin.settings.tagLinkSubstitutions.length; index++) {
             const tagLinkSubstitution = this.plugin.settings.tagLinkSubstitutions[index];
 
-            const row = new Setting(containerEl)
-                .addText(text => text
-                    .setPlaceholder('Tag Regex')
-                    .setValue(tagLinkSubstitution.tagRegex)
-                    .onChange(async (newValue) => {
-                        this.plugin.settings.tagLinkSubstitutions[index].tagRegex = newValue;
+            const row = new Setting(containerEl);
 
-                        await this.plugin.saveSettings();
-                    }));
+            // Regular Expression Input
+            row.addText(text => text
+                .setPlaceholder('Tag Regex')
+                .setValue(tagLinkSubstitution.tagRegex)
+                .onChange(async (newValue) => {
+                    const tagLinkSubstitution = this.plugin.settings.tagLinkSubstitutions[index];
 
+                    // Update the value
+                    tagLinkSubstitution.tagRegex = newValue;
+
+                    // Validate the regular expression
+                    await this.plugin.validateTagRegex(tagLinkSubstitution);
+
+                    // Re-validate the substitution if the new regular expression has no issues
+                    // This is necessary because the substitution's validity depends on the regular expression
+                    if (tagLinkSubstitution.metadata.regexProblem === null) {
+                        const originalSubstitutionProblem = tagLinkSubstitution.metadata.substitutionProblem;
+
+                        await this.plugin.validateLinkSubstitution(tagLinkSubstitution);
+
+                        if (tagLinkSubstitution.metadata.substitutionProblem !== originalSubstitutionProblem) {
+                            this.display();
+                        }
+                    }
+
+                    // Display any issues on the text input
+                    this.displayElementProblem(
+                        text.inputEl,
+                        tagLinkSubstitution.metadata.regexProblem
+                    );
+
+                    // Save the settings
+                    await this.plugin.saveSettings();
+                })
+                .then(text=>
+                    // Display any cached issues with the regular expression
+                    this.displayElementProblem(
+                        text.inputEl,
+                        this.plugin.settings.tagLinkSubstitutions[index].metadata.regexProblem
+                    )));
+
+            // Link Substitution
             row.addText(text => text
                 .setPlaceholder('Link Substitution')
                 .setValue(tagLinkSubstitution.linkSubstitution)
                 .onChange(async (newValue) => {
-                    this.plugin.settings.tagLinkSubstitutions[index].linkSubstitution = newValue;
+                    const tagLinkSubstitution = this.plugin.settings.tagLinkSubstitutions[index];
 
+                    // Update the value
+                    tagLinkSubstitution.linkSubstitution = newValue;
+
+                    // Validate the substitution
+                    await this.plugin.validateLinkSubstitution(tagLinkSubstitution);
+
+                    // Display any issues on the text input
+                    this.displayElementProblem(
+                        text.inputEl,
+                        tagLinkSubstitution.metadata.substitutionProblem
+                    );
+
+                    // Save the settings
                     await this.plugin.saveSettings();
-                }));
+                })
+                .then(text =>
+                    // Display any cached issues with the substitution
+                    this.displayElementProblem(
+                        text.inputEl,
+                        this.plugin.settings.tagLinkSubstitutions[index].metadata.substitutionProblem
+                    )));
 
+            // Row Delete Button
             row.addButton(button => button
                 .setIcon('x')
                 .setTooltip('Delete')
@@ -169,4 +295,14 @@ class TagLinkSettingTab extends PluginSettingTab {
                 }));
         }
 	}
+
+    displayElementProblem(element: HTMLInputElement, problem: string | null) {
+        if (problem !== null) {
+            element.style.border = '2px solid #ff4b4b';
+            element.title = problem;
+        } else {
+            element.style.border = '';
+            element.title = '';
+        }
+    }
 }
