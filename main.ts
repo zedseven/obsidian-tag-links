@@ -193,11 +193,11 @@ class TagLinkSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
         // Header
-        containerEl.createEl('h2', { text: 'Tag Link Substitutions' });
+        containerEl.createEl('h2', { text: 'Tag link substitutions' });
 
         // Row Add Button
         new Setting(containerEl)
-            .setName('Add New')
+            .setName('Add new')
             .addButton(button => button
                 .setIcon('plus')
                 .setTooltip('Add')
@@ -215,7 +215,7 @@ class TagLinkSettingTab extends PluginSettingTab {
 
             // Regular Expression Input
             row.addText(text => text
-                .setPlaceholder('Tag Regex')
+                .setPlaceholder('Tag regex')
                 .setValue(tagLinkSubstitution.tagRegex)
                 .onChange(async (newValue) => {
                     const tagLinkSubstitution = this.plugin.settings.tagLinkSubstitutions[index];
@@ -256,7 +256,7 @@ class TagLinkSettingTab extends PluginSettingTab {
 
             // Link Substitution
             row.addText(text => text
-                .setPlaceholder('Link Substitution')
+                .setPlaceholder('Link substitution')
                 .setValue(tagLinkSubstitution.linkSubstitution)
                 .onChange(async (newValue) => {
                     const tagLinkSubstitution = this.plugin.settings.tagLinkSubstitutions[index];
