@@ -1,7 +1,7 @@
 {
 	"id": "tag-links",
 	"name": "Tag Links",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"minAppVersion": "0.15.0",
 	"description": "Allows tags to be used as links.",
 	"author": "Zacchary Dempsey-Plante",
