@@ -87,8 +87,8 @@ export default class TagLink extends Plugin {
 
     async openTagAsLink(tag: string) {
         for (const tagLinkSubstitution of this.settings.tagLinkSubstitutions) {
-            // Skip entries that are known to be invalid
-            if (tagLinkSubstitution.metadata.regexProblem !== null || tagLinkSubstitution.metadata.substitutionProblem !== null) {
+            // Skip empty entries
+            if (tagLinkSubstitution.tagRegex.length == 0 || tagLinkSubstitution.linkSubstitution.length == 0) {
                 continue;
             }
 
@@ -155,11 +155,6 @@ export default class TagLink extends Plugin {
 
     async validateLinkSubstitution(tagLinkSubstitution: TagLinkSubstitution) {
         const FIND_SUBSTITUTION_REGEX = /\$(\d+)/g;
-
-        if (tagLinkSubstitution.linkSubstitution.length == 0) {
-            tagLinkSubstitution.metadata.substitutionProblem = 'The value is empty!';
-            return;
-        }
 
         let maximumSubstitutionValue = null;
         for (const substitutionMatch of tagLinkSubstitution.linkSubstitution.matchAll(FIND_SUBSTITUTION_REGEX)) {
