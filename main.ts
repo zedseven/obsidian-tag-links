@@ -29,8 +29,8 @@ const DEFAULT_SUBSTITUTION: TagLinkSubstitution = {
     tagRegex: '',
     linkSubstitution: '',
     metadata: {
-        regexProblem: 'The value is empty!',
-        substitutionProblem: 'The value is empty!',
+        regexProblem: null,
+        substitutionProblem: null,
         captureGroupCount: 0
     }
 }
