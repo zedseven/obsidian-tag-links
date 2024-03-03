@@ -156,6 +156,11 @@ export default class TagLink extends Plugin {
     async validateLinkSubstitution(tagLinkSubstitution: TagLinkSubstitution) {
         const FIND_SUBSTITUTION_REGEX = /\$(\d+)/g;
 
+        if (tagLinkSubstitution.linkSubstitution.length == 0) {
+            tagLinkSubstitution.metadata.substitutionProblem = 'The value is empty!';
+            return;
+        }
+
         let maximumSubstitutionValue = null;
         for (const substitutionMatch of tagLinkSubstitution.linkSubstitution.matchAll(FIND_SUBSTITUTION_REGEX)) {
             let substitutionValue = parseInt(substitutionMatch[1], 10);
