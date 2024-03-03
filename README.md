@@ -5,6 +5,9 @@ shortcut.
 The way it works is that you define regular expressions to match certain tags, then define link substitutions that use
 the captured values.
 
+## Installation
+Install it like any other plugin, then set a hotkey for the plugin's command in the settings.
+
 ## Example
 For example, you might use tags to reference [Jira](https://www.atlassian.com/software/jira) tickets, and want to be
 able to open their associated pages easily.
