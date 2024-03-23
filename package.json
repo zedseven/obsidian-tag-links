@@ -1,7 +1,7 @@
 {
 	"name": "tag-links",
 	"version": "1.0.2",
-	"description": "Allows tags to be used as links.",
+	"description": "Allows tags to be opened as links using a hotkey.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
