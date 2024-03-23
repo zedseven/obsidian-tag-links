@@ -111,9 +111,10 @@ export default class TagLink extends Plugin {
                 continue;
             }
 
-            // Step through the capture groups, using the capture groups' indices as the substitution targets
+            // Step through the capture groups in reverse order, using the capture groups' indices as the substitution targets
+            // It's done in reverse order so that two-digit numbers are replaced first - `$12` will be replaced before `$1`, which would otherwise also match
             let finalLink = tagLinkSubstitution.linkSubstitution;
-            for (let index = 1; index < matchResult.length; index++) {
+            for (let index = matchResult.length - 1; index >= 1; index--) {
                 finalLink = finalLink.replace('$' + index, matchResult[index]);
             }
 
