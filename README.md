@@ -1,6 +1,5 @@
 # Obsidian Tag Links
-This is a plugin for [Obsidian](https://obsidian.md) that allows tags to be opened as links using a configured keyboard
-shortcut.
+A plugin for [Obsidian](https://obsidian.md) that allows tags to be opened as links using a hotkey.
 
 You define regular expressions to match certain tags, then define link substitutions that use the captured values to
 build a URL, which is then opened automatically.
