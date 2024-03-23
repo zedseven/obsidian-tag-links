@@ -295,10 +295,10 @@ class TagLinkSettingTab extends PluginSettingTab {
 
     displayElementProblem(element: HTMLInputElement, problem: string | null) {
         if (problem !== null) {
-            element.style.border = '2px solid #ff4b4b';
+            element.className = 'invalid';
             element.title = problem;
         } else {
-            element.style.border = '';
+            element.className = '';
             element.title = '';
         }
     }
