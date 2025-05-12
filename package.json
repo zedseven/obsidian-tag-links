@@ -1,6 +1,6 @@
 {
 	"name": "tag-links",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"description": "Allows tags to be opened as links using a hotkey.",
 	"main": "main.js",
 	"scripts": {
